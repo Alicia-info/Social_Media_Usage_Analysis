@@ -1,0 +1,406 @@
+---
+title: "Final project data dashbroad"
+format:
+  html:
+    embed-resources: true
+author: Alicia Liu, Aarav
+---
+
+## load libraries and datas
+
+```{r}
+#| message: false
+#| warning: false
+#| output: false
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(stringr)
+library(readxl)
+library(plotly)
+Social_Media_Impact_on_Daily_Lives <- read.csv("Social Media Impact on Daily Lives.csv")
+Effects_of_Social_Media_Responses_ <- read_xlsx("Effects of Social Media (Responses).xlsx")
+```
+
+## Introduction
+
+### I. Introduce The Topic
+
+#### 1.1 Providing Topical Overview 
+
+Social media has become a central part of modern life, shaping how people communicate, share information, and spend their time online. Platforms such as Instagram, TikTok, Snapchat, and Facebook are used daily by millions of people around the world. Because of their widespread use, researchers are increasingly interested in understanding how social media habits differ across demographic groups and how usage patterns may affect other aspects of life such as productivity, physical activity, and well-being. Research from the Pew Research Center shows that younger people tend to use social media more frequently and across more platforms than older individuals, highlighting the importance of examining age-related patterns in digital behavior. More information about social media trends can be found here: <https://www.pewresearch.org/internet/>
+
+for research questions, our main takeaways are the following three questions:
+
+Does daily social media usage (hours) differ significantly across age groups, and does it crowd out physical activity?
+
+Understanding whether higher social media use is associated with reduced time spent on physical activity can help researchers evaluate potential lifestyle impacts of digital engagement. If younger users spend significantly more time online, it may suggest that social media replaces time that could otherwise be used for exercise or other offline activities.
+
+Which platforms dominate among younger (≤18) vs. older (25+) age groups?
+
+Social media platforms appeal to different demographics, and some platforms become more popular with certain age groups over time. Examining platform preferences across age groups helps reveal how digital trends evolve and how different populations interact with technology.
+
+Is there a relationship between age group and average daily social media usage?
+
+This question explores whether different age groups spend significantly different amounts of time on social media each day. Identifying patterns in usage across age groups can provide insights into generational differences in technology use and online behavior.
+
+To answer these questions, this project analyzes two publicly available datasets that contain survey responses related to social media habits and demographics. By merging these datasets, we can explore relationships between age, social media usage time, and other behavioral factors such as platform preference and physical activity. Combining datasets allows for richer analysis because it provides both behavioral and demographic information in a single dataset. This analysis is important because social media continues to influence communication, education, marketing, and mental health discussions. However, there are also ethical considerations when analyzing behavioral datasets. Survey responses rely on self-reported information, which may not always perfectly reflect real behavior. Additionally, the datasets used may not represent the entire global population since they are based on specific survey samples. These limitations must be considered when interpreting the results of the analysis.
+
+#### 1.2 Data Context 
+
+##### Dataset 1
+
+Dataset Link: <https://data.mendeley.com/datasets/9s2nmbxkrs/2> Creators: Hemayet Hossain Tuhin, Md Abdul Kayum, and Md. Firoz Hasan (Daffodil International University). This dataset was created to study the effects of social media on individuals’ daily lives. The data was collected using a Google Forms survey that asked respondents about their social media habits, usage time, and the ways social media affects their everyday activities. The survey included multiple structured questions designed to capture both behavioral and demographic information about social media users. The dataset contains 522 responses from participants who completed the survey. Each observation represents a single respondent and includes variables describing their social media behavior and lifestyle factors. The sample includes students, employees, and unemployed individuals, although students make up the majority of respondents. The survey was conducted in recent years to analyze how social media affects modern digital behavior. A strength of this dataset is that it includes a relatively large number of responses and multiple variables describing user behavior. However, a limitation is that the responses are self-reported, meaning individuals may not accurately estimate their daily social media usage. Additionally, the sample may not perfectly represent the broader global population.
+
+##### Dataset 2 
+
+Dataset Link: <https://data.world/maheepmahat/data-of-usage-of-social-media-by-students-between-age-17-22/workspace/file?filename=Effects+of+Social+Media+%28Responses%29.xlsx>
+
+Creator: Maheep Mahat. This dataset focuses specifically on students between the ages of 17 and 22 and their experiences using social media. The data was collected through a survey in which students reported their social media usage habits, including how frequently they use different platforms and how social media affects their daily lives. Each row in the dataset represents a single student respondent who completed the survey. The dataset includes demographic information such as age as well as variables describing time spent on social media, the platforms used, and perceived effects of social media use. Because the dataset specifically focuses on students within a narrow age range, it provides detailed insight into the habits of younger social media users. A benefit of this dataset is that it captures detailed information about one of the most active social media user groups. However, a limitation is that it focuses only on students aged 17–22, which means it does not represent older populations. When combined with the first dataset, however, it allows for a broader analysis of social media behavior and helps provide more context when examining how age influences social media usage patterns.
+
+## visualisations for research question
+
+### 0.setting: join datasets by age
+
+```{r}
+filtered_data <- Social_Media_Impact_on_Daily_Lives %>%
+  rename(age = `Enter.your.age..Ex..20.`) %>%
+  filter(age >= 14 & age <= 21)
+
+combined_data <- inner_join(
+  filtered_data,
+  Effects_of_Social_Media_Responses_,
+  by = c("age" = "What is your age?")
+)
+combined_data <- combined_data %>%
+  mutate(age_group = case_when(
+    age <= 18 ~ "Younger (≤18)",
+    age <= 21 ~ "Older (19–21)"
+  ))
+```
+
+### 1, research question 1
+
+Does daily social media usage (hours) differ significantly across age groups, and does it crowd out physical activity?
+
+```{r}
+rq1_data <- combined_data %>%
+  select(
+    age_group,
+    sm_hours   = `How much time do you spend on social media in a day?`,
+    phy_hours  = `How much time do you spend on physical activities in a day?`
+  ) %>%
+
+  mutate(
+    sm_hours = factor(sm_hours,
+      levels = c("none", "less than 1 hr", "1 - 2.5 hrs",
+                 "upto 4 hrs", "more than 4 hrs")),
+    phy_hours = factor(phy_hours,
+      levels = c("none", "less than 1 hr", "1 - 2.5 hrs",
+                 "upto 4 hrs", "more than 4 hrs"))
+  )
+
+
+rq1_long <- rq1_data %>%
+  pivot_longer(
+    cols      = c(sm_hours, phy_hours),
+    names_to  = "activity_type",
+    values_to = "hours_bracket"
+  ) %>%
+  mutate(
+    activity_type = recode(activity_type,
+      "sm_hours"  = "Social Media",
+      "phy_hours" = "Physical Activity"
+    )
+  ) %>%
+  count(age_group, activity_type, hours_bracket) %>%
+  group_by(age_group, activity_type) %>%
+  mutate(pct = n / sum(n) * 100) %>%
+  ungroup()
+
+
+plot_rq1 <- ggplot(rq1_long,
+    aes(x = hours_bracket, y = pct, fill = activity_type)) +
+  geom_col(position = "dodge", width = 0.7, colour = "white", linewidth = 0.3) +
+  facet_wrap(~ age_group, ncol = 1) +
+  scale_fill_manual(
+    values = c("Social Media" = "#E05A5A", "Physical Activity" = "#4A90D9"),
+    name   = "Activity"
+  ) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
+  scale_y_continuous(labels = scales::label_percent(scale = 1),
+                     expand = expansion(mult = c(0, 0.05))) +
+  labs(
+    title    = "RQ1: Social Media Usage vs Physical Activity by Age Group",
+    subtitle = "Each bar shows the % of respondents in that hours bracket\nRed bars dominating right side = heavy social media; Blue bars dominating left = little physical activity",
+    x        = "Hours per Day",
+    y        = "% of Respondents",
+    caption  = "Source: Combined dataset (n = 5,448 after inner join)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title       = element_text(face = "bold", size = 14),
+    plot.subtitle    = element_text(size = 10, colour = "grey40"),
+    strip.text       = element_text(face = "bold", size = 12),
+    legend.position  = "top",
+    panel.grid.major.x = element_blank(),
+    axis.text.x      = element_text(size = 9)
+  )
+
+print(plot_rq1)
+ggplotly(plot_rq1, tooltip = c("x", "y", "fill")) %>%
+  layout(legend = list(orientation = "h", x = 0, y = 1.1))
+
+
+```
+
+#### 2, visualisation 2 for research question 1
+
+```{r}
+rq1_mirror <- rq1_long %>%
+  mutate(
+    pct_directed = if_else(activity_type == "Social Media", pct, -pct)
+  )
+
+plot_rq1_mirror <- ggplot(rq1_mirror,
+    aes(x = pct_directed, y = hours_bracket, fill = activity_type)) +
+  geom_col(width = 0.6, colour = "white", linewidth = 0.3) +
+  facet_wrap(~ age_group, ncol = 2) +
+  geom_vline(xintercept = 0, colour = "grey30", linewidth = 0.8) +
+  scale_fill_manual(
+    values = c("Social Media" = "#E05A5A", "Physical Activity" = "#4A90D9"),
+    name   = "Activity"
+  ) +
+  scale_x_continuous(
+    labels = function(x) paste0(abs(x), "%"),
+    limits = c(-65, 65)
+  ) +
+  labs(
+    title    = "RQ1: Mirrored View — Social Media vs Physical Activity",
+    subtitle = "← Physical Activity    |    Social Media →",
+    x        = "% of Respondents",
+    y        = "Hours per Day",
+    caption  = "Source: Combined dataset"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title      = element_text(face = "bold", size = 14),
+    plot.subtitle   = element_text(size = 11, colour = "grey40", hjust = 0.5),
+    strip.text      = element_text(face = "bold"),
+    legend.position = "top",
+    panel.grid.major.y = element_blank()
+  )
+
+print(plot_rq1_mirror)
+ggplotly(plot_rq1_mirror, tooltip = c("x", "y", "fill")) %>%
+  layout(legend = list(orientation = "h", x = 0, y = 1.1))
+
+```
+
+### 2, research question 2: Which platforms dominate among younger (≤18) vs. older (25+) age groups?
+
+```{r}
+
+csv_platforms <- combined_data %>%
+  select(age_group,
+         platforms = `What.social.networking.sites.do.you.use.`) %>%
+  mutate(platforms = str_to_lower(platforms)) %>%
+  separate_rows(platforms, sep = ",\\s*") %>%
+  mutate(platforms = str_trim(platforms)) %>%
+  filter(platforms != "")
+
+xlsx_col <- "Which social media platform/s do you like the most or use the most?"
+
+xlsx_platforms <- combined_data %>%
+  select(age_group, platforms = all_of(xlsx_col)) %>%
+  mutate(platforms = str_to_lower(platforms)) %>%
+  separate_rows(platforms, sep = ",\\s*") %>%
+  mutate(platforms = str_trim(platforms)) %>%
+  filter(platforms != "")
+
+all_platforms <- bind_rows(csv_platforms, xlsx_platforms) %>%
+  mutate(platforms = case_when(
+    str_detect(platforms, "youtube|yt")    ~ "YouTube",
+    str_detect(platforms, "facebook|fb")   ~ "Facebook",
+    str_detect(platforms, "instagram|ig")  ~ "Instagram",
+    str_detect(platforms, "whatsapp")      ~ "WhatsApp",
+    str_detect(platforms, "telegram")      ~ "Telegram",
+    str_detect(platforms, "twitter|twit")  ~ "Twitter/X",
+    str_detect(platforms, "tiktok")        ~ "TikTok",
+    str_detect(platforms, "linkedin|linkdin") ~ "LinkedIn",
+    str_detect(platforms, "imo")           ~ "IMO",
+    TRUE                                   ~ str_to_title(platforms)
+  ))
+
+platform_counts <- all_platforms %>%
+  count(age_group, platforms) %>%
+  group_by(age_group) %>%
+  mutate(pct = n / sum(n) * 100) %>%
+  ungroup()
+
+top_platforms <- platform_counts %>%
+  group_by(platforms) %>%
+  summarise(total = sum(n)) %>%
+  slice_max(total, n = 8) %>%
+  pull(platforms)
+
+platform_plot_data <- platform_counts %>%
+  filter(platforms %in% top_platforms) %>%
+  mutate(platforms = reorder(platforms, pct, FUN = sum))
+
+platform_colours <- c(
+  "YouTube"   = "#FF0000", "Facebook"  = "#1877F2",
+  "Instagram" = "#C13584", "WhatsApp"  = "#25D366",
+  "Telegram"  = "#2CA5E0", "Twitter/X" = "#1DA1F2",
+  "TikTok"    = "#010101", "LinkedIn"  = "#0A66C2",
+  "IMO"       = "#FF6B00"
+)
+
+plot_rq2 <- ggplot(platform_plot_data,
+    aes(x = pct, y = platforms, fill = platforms)) +
+  geom_col(show.legend = FALSE, width = 0.65,
+           colour = "white", linewidth = 0.3) +
+  geom_text(aes(label = sprintf("%.1f%%", pct)),
+            hjust = -0.15, size = 3.2, colour = "grey30") +
+  facet_wrap(~ age_group, ncol = 2) +
+  scale_fill_manual(values = platform_colours) +
+  scale_x_continuous(
+    labels = scales::label_percent(scale = 1),
+    expand = expansion(mult = c(0, 0.12))
+  ) +
+  labs(
+    title    = "RQ2: Platform Dominance — Younger (≤18) vs Older (19–21)",
+    subtitle = "% of total platform mentions within each age group\n(one respondent may mention multiple platforms)",
+    x        = "% of Platform Mentions",
+    y        = NULL,
+    caption  = "Source: Combined dataset — platforms extracted from both survey instruments"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title      = element_text(face = "bold", size = 14),
+    plot.subtitle   = element_text(size = 10, colour = "grey40"),
+    strip.text      = element_text(face = "bold", size = 12),
+    panel.grid.major.y = element_blank(),
+    axis.text.y     = element_text(size = 11)
+  )
+
+print(plot_rq2)
+ggplotly(plot_rq2, tooltip = c("x", "y")) %>%
+  layout(legend = list(orientation = "h", x = 0, y = 1.05))
+```
+
+#### visualization 2 for research question 2
+
+```{r}
+platform_wide <- platform_plot_data %>%
+  select(age_group, platforms, pct) %>%
+  pivot_wider(names_from = age_group, values_from = pct, values_fill = 0) %>%
+  rename(younger = `Younger (≤18)`, older = `Older (19–21)`) %>%
+  mutate(
+    delta      = older - younger,   # positive = skews older, negative = skews younger
+    skews_to   = if_else(delta > 0, "Older (19–21)", "Younger (≤18)"),
+    platforms  = reorder(platforms, delta)
+  )
+
+plot_rq2_diverge <- ggplot(platform_wide,
+    aes(x = delta, y = platforms, colour = skews_to)) +
+  geom_segment(aes(x = 0, xend = delta, yend = platforms),
+               linewidth = 1.2, alpha = 0.7) +
+  geom_point(size = 4) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_text(aes(label = sprintf("%+.1f%%", delta)),
+            hjust = if_else(platform_wide$delta > 0, -0.3, 1.3),
+            size = 3.3, colour = "grey30") +
+  scale_colour_manual(
+    values = c("Younger (≤18)" = "#E05A5A", "Older (19–21)" = "#4A90D9"),
+    name   = "Skews toward"
+  ) +
+  scale_x_continuous(
+    labels = function(x) paste0(ifelse(x > 0, "+", ""), x, "%"),
+    expand = expansion(mult = c(0.15, 0.15))
+  ) +
+  labs(
+    title    = "RQ2: Which Platforms Skew Younger vs Older?",
+    subtitle = "Difference in platform mention share (Older % minus Younger %)\nRed = younger-skewed  |  Blue = older-skewed",
+    x        = "Percentage Point Difference",
+    y        = NULL,
+    caption  = "Source: Combined dataset"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title      = element_text(face = "bold", size = 14),
+    plot.subtitle   = element_text(size = 10, colour = "grey40"),
+    legend.position = "top",
+    panel.grid.major.y = element_blank(),
+    axis.text.y     = element_text(size = 11)
+  )
+
+print(plot_rq2_diverge)
+ggplotly(plot_rq2_diverge, tooltip = c("y", "x", "colour")) %>%
+  layout(legend = list(orientation = "h", x = 0, y = 1.1))
+```
+
+### 3, research question 3: is there a relationship between age group and social media usage time?
+
+```{r}
+hours_levels <- c("1-2", "3-4", "4-5", "5-6", "6+")
+
+plot_data <- combined_data %>%
+  select(age_group,
+         hours = On.an.average.how.many.hours.a.day.do.you.spend.on.these.sites.) %>%
+  filter(!is.na(hours)) %>%
+  mutate(hours = factor(hours, levels = hours_levels))
+
+
+plot_rq3 <- ggplot(plot_data, aes(x = hours, fill = age_group)) +
+  geom_bar(position = "stack", width = 0.65, colour = "white", linewidth = 0.3) +
+  scale_fill_manual(
+    values = c("Younger (≤18)" = "#E05A5A", "Older (19–21)" = "#4A90D9"),
+    name   = "Age Group"
+  ) +
+  labs(
+    title    = "Relationship Between Age Group and Social Media Usage Time",
+    subtitle = "Number of respondents per daily usage bracket, stacked by age group",
+    x        = "Daily Social Media Hours",
+    y        = "Number of Respondents"
+  ) +
+  theme_minimal(base_size = 13)
+
+ggplotly(plot_rq3, tooltip = c("x", "fill", "count")) %>%
+  layout(legend = list(orientation = "h", x = 0, y = 1.1))
+
+```
+
+## conclusion
+
+Part III: Conclusion and Takeaways
+
+After analyzing the merged data and visualizations, several major insights emerge:
+
+1, the use of social media do crowd out physical exercise time. The use of social media is addictive in nature.
+
+about 10% percent of respondents don't spend time exercising, with about 10% percent of respondent spend more than 4 hours on social media. For both age groups, there are significantly more people spend less than 1 hour to do exercise than using social media. There is slightly more people on people that spend 1-2.5 hours on social media than exercising. There are significantly more respondents that spend time on social media usage for more than 4 hours, and there are less that 10% of respondents that spend more than 4 hours on physical exercising. Thus, I can deduce from the data that social media is addictive in nature.
+
+There is not a significant difference between the distribution of time that the younger and older group spend on social media.
+
+2\. The difference between age groups is not significant for platforms preference. Youtube, Whatsapp, Facebook and Instagram dominant the social media market.
+
+for the comparison across the age groups, I can tell that although the difference is not significant—Youtube, WhatsApp, and Facebook dominates the social media market, different age groups show different preference for the social media platforms. For the older groups, the majority of them(with a statistics of 20.7%) prefer Facebook, with a close proportion of preference on WhatsApp (20.7%) and a slightly lowered preference for Youtube. (19.8%)
+
+For the younger group, they prefer YouTube most(22.7%), WhatsApp as the second and Facebook as the third.
+
+Which platform skews younger or older?
+
+For second visualization, It shows that Telegram has most older users, and Youtube has most younger users.Younger (≤18**)** are disproportionately drawn to YouTube, Instagram, and WhatsApp — platforms oriented around visual content and peer messaging
+
+Older (19–21) show stronger relative use of Telegram and Facebook — platforms associated with broader social networks and information sharing
+
+Despite the cultural narrative around TikTok dominating teen use, it appears at only 3.3% for younger users — virtually identical to the older group, suggesting it may be underreported or less dominant in this specific sample's demographic context
+
+3\. Age group is correlated with social media usage time. Older age group tends to use social media longer per day.
+
+from the bar chart, I can tell that the the majority of users spend 1-4 hours on social media per day.
+
+For the analysis of the distribution specifically, the distribution is unimodal and right-skewed for both groups, with 3–4 hours/day being the clear peak across the entire sample (\~2,400 combined respondents). Usage drops off sharply beyond 4 hours, though a notable tail extends to 6+ hours.
+
+older age group (19-21) tends to spend more time on social media than younger group( younger than 18). It is shown as a pattern for all of the time slots with no exception.
