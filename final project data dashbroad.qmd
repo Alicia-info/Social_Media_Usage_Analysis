@@ -1,9 +1,9 @@
 ---
-title: "Final project data dashbroad"
+title: "Final Project Data Dashbroad"
 format:
   html:
     embed-resources: true
-author: Alicia Liu, Aarav
+author: Alicia Liu, Aarav Tyagi
 ---
 
 ## load libraries and datas
@@ -30,7 +30,7 @@ Effects_of_Social_Media_Responses_ <- read_xlsx("Effects of Social Media (Respon
 
 Social media has become a central part of modern life, shaping how people communicate, share information, and spend their time online. Platforms such as Instagram, TikTok, Snapchat, and Facebook are used daily by millions of people around the world. Because of their widespread use, researchers are increasingly interested in understanding how social media habits differ across demographic groups and how usage patterns may affect other aspects of life such as productivity, physical activity, and well-being. Research from the Pew Research Center shows that younger people tend to use social media more frequently and across more platforms than older individuals, highlighting the importance of examining age-related patterns in digital behavior. More information about social media trends can be found here: <https://www.pewresearch.org/internet/>
 
-for research questions, our main takeaways are the following three questions:
+For research questions, our main takeaways are the following three questions:
 
 Does daily social media usage (hours) differ significantly across age groups, and does it crowd out physical activity?
 
@@ -58,9 +58,9 @@ Dataset Link: <https://data.world/maheepmahat/data-of-usage-of-social-media-by-s
 
 Creator: Maheep Mahat. This dataset focuses specifically on students between the ages of 17 and 22 and their experiences using social media. The data was collected through a survey in which students reported their social media usage habits, including how frequently they use different platforms and how social media affects their daily lives. Each row in the dataset represents a single student respondent who completed the survey. The dataset includes demographic information such as age as well as variables describing time spent on social media, the platforms used, and perceived effects of social media use. Because the dataset specifically focuses on students within a narrow age range, it provides detailed insight into the habits of younger social media users. A benefit of this dataset is that it captures detailed information about one of the most active social media user groups. However, a limitation is that it focuses only on students aged 17–22, which means it does not represent older populations. When combined with the first dataset, however, it allows for a broader analysis of social media behavior and helps provide more context when examining how age influences social media usage patterns.
 
-## visualisations for research question
+## Visualisations for research question
 
-### 0.setting: join datasets by age
+### 0.Setting: join datasets by age
 
 ```{r}
 filtered_data <- Social_Media_Impact_on_Daily_Lives %>%
@@ -79,7 +79,7 @@ combined_data <- combined_data %>%
   ))
 ```
 
-### 1, research question 1
+### 1, Research Question 1
 
 Does daily social media usage (hours) differ significantly across age groups, and does it crowd out physical activity?
 
@@ -154,7 +154,7 @@ ggplotly(plot_rq1, tooltip = c("x", "y", "fill")) %>%
 
 ```
 
-#### 2, visualisation 2 for research question 1
+#### 2, Visualisation 2 for Research Question 1
 
 ```{r}
 rq1_mirror <- rq1_long %>%
@@ -197,7 +197,7 @@ ggplotly(plot_rq1_mirror, tooltip = c("x", "y", "fill")) %>%
 
 ```
 
-### 2, research question 2: Which platforms dominate among younger (≤18) vs. older (25+) age groups?
+### 2, Research Question 2: Which platforms dominate among younger (≤18) vs. older (25+) age groups?
 
 ```{r}
 
@@ -289,7 +289,7 @@ ggplotly(plot_rq2, tooltip = c("x", "y")) %>%
   layout(legend = list(orientation = "h", x = 0, y = 1.05))
 ```
 
-#### visualization 2 for research question 2
+#### Visualization 2 for Research Question 2
 
 ```{r}
 platform_wide <- platform_plot_data %>%
@@ -340,7 +340,7 @@ ggplotly(plot_rq2_diverge, tooltip = c("y", "x", "colour")) %>%
   layout(legend = list(orientation = "h", x = 0, y = 1.1))
 ```
 
-### 3, research question 3: is there a relationship between age group and social media usage time?
+### 3, Research Question 3: Is there a relationship between age group and social media usage time?
 
 ```{r}
 hours_levels <- c("1-2", "3-4", "4-5", "5-6", "6+")
@@ -371,21 +371,21 @@ ggplotly(plot_rq3, tooltip = c("x", "fill", "count")) %>%
 
 ```
 
-## conclusion
+## Conclusion
 
 Part III: Conclusion and Takeaways
 
 After analyzing the merged data and visualizations, several major insights emerge:
 
-1, the use of social media do crowd out physical exercise time. The use of social media is addictive in nature.
+1: The use of social media do crowd out physical exercise time. The use of social media is addictive in nature.
 
-about 10% percent of respondents don't spend time exercising, with about 10% percent of respondent spend more than 4 hours on social media. For both age groups, there are significantly more people spend less than 1 hour to do exercise than using social media. There is slightly more people on people that spend 1-2.5 hours on social media than exercising. There are significantly more respondents that spend time on social media usage for more than 4 hours, and there are less that 10% of respondents that spend more than 4 hours on physical exercising. Thus, I can deduce from the data that social media is addictive in nature.
+About 10% percent of respondents don't spend time exercising, with about 10% percent of respondent spend more than 4 hours on social media. For both age groups, there are significantly more people spend less than 1 hour to do exercise than using social media. There is slightly more people on people that spend 1-2.5 hours on social media than exercising. There are significantly more respondents that spend time on social media usage for more than 4 hours, and there are less that 10% of respondents that spend more than 4 hours on physical exercising. Thus, I can deduce from the data that social media is addictive in nature.
 
 There is not a significant difference between the distribution of time that the younger and older group spend on social media.
 
-2\. The difference between age groups is not significant for platforms preference. Youtube, Whatsapp, Facebook and Instagram dominant the social media market.
+2: The difference between age groups is not significant for platforms preference. Youtube, Whatsapp, Facebook and Instagram dominant the social media market.
 
-for the comparison across the age groups, I can tell that although the difference is not significant—Youtube, WhatsApp, and Facebook dominates the social media market, different age groups show different preference for the social media platforms. For the older groups, the majority of them(with a statistics of 20.7%) prefer Facebook, with a close proportion of preference on WhatsApp (20.7%) and a slightly lowered preference for Youtube. (19.8%)
+For the comparison across the age groups, I can tell that although the difference is not significant—Youtube, WhatsApp, and Facebook dominates the social media market, different age groups show different preference for the social media platforms. For the older groups, the majority of them(with a statistics of 20.7%) prefer Facebook, with a close proportion of preference on WhatsApp (20.7%) and a slightly lowered preference for Youtube. (19.8%)
 
 For the younger group, they prefer YouTube most(22.7%), WhatsApp as the second and Facebook as the third.
 
@@ -397,10 +397,10 @@ Older (19–21) show stronger relative use of Telegram and Facebook — platform
 
 Despite the cultural narrative around TikTok dominating teen use, it appears at only 3.3% for younger users — virtually identical to the older group, suggesting it may be underreported or less dominant in this specific sample's demographic context
 
-3\. Age group is correlated with social media usage time. Older age group tends to use social media longer per day.
+3: Age group is correlated with social media usage time. Older age group tends to use social media longer per day.
 
-from the bar chart, I can tell that the the majority of users spend 1-4 hours on social media per day.
+From the bar chart, I can tell that the the majority of users spend 1-4 hours on social media per day.
 
 For the analysis of the distribution specifically, the distribution is unimodal and right-skewed for both groups, with 3–4 hours/day being the clear peak across the entire sample (\~2,400 combined respondents). Usage drops off sharply beyond 4 hours, though a notable tail extends to 6+ hours.
 
-older age group (19-21) tends to spend more time on social media than younger group( younger than 18). It is shown as a pattern for all of the time slots with no exception.
+Older age group (19-21) tends to spend more time on social media than younger group( younger than 18). It is shown as a pattern for all of the time slots with no exception.
